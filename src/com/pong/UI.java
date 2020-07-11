@@ -35,6 +35,7 @@ public class UI extends JPanel implements KeyListener {
         g2d.fillOval(ball.getX(), ball.getY(), ball.getWidth(), ball.getHeight());
         g2d.setStroke(new BasicStroke(5));
         g2d.drawLine(234, 0, 234, 500);
+        //System.out.println("x " + ball.getX() + " y " + ball.getY());
         repaint();
     }
 
@@ -61,12 +62,11 @@ public class UI extends JPanel implements KeyListener {
         frame.add(this);
         frame.setVisible(true);
         enableMoveable();
-        ball = new Ball(230, 200, 20, 20);
+        ball = new Ball(230, 200, 1, 1, 3);
         movebacktoleft = true;
 
-        Runnable runnable = () -> {
+        Runnable keyController = () -> {
             while (true) {
-                updateBall();
                 if (wisPressed) {
                     checkScreenCollission();
                     if (p1isMoveableUP) {
@@ -98,15 +98,29 @@ public class UI extends JPanel implements KeyListener {
                 }
             }
         };
-        Thread thread = new Thread(runnable);
-        thread.start();
+        Thread keyControllerThread = new Thread(keyController);
+        keyControllerThread.start();
+
+
+        Runnable collisionBall = () -> {
+            while (true) {
+                updateBall();
+                try {
+                    Thread.sleep(ball.getVelocity());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        Thread collisionBallThread = new Thread(collisionBall);
+        collisionBallThread.start();
     }
 
 
     private synchronized void updateBall() {
 
-        // movebacktoleft  affects that the ball bounces back if he collides with on of the player bars
-
+        // movebacktoleft  affects that the ball bounces back if he collides with one of the player bars
         if (movebacktoleft) {
             // moves ball to the left side
             if (ball.getX() >= p1.getX()) {
@@ -114,13 +128,9 @@ public class UI extends JPanel implements KeyListener {
             }
         }
 
-        // collision with player1
-        //                      player bar position          ball on same heigh                                                       entire player bar
-        if (ball.getX() == (p1.getX() + p1.getWidth()) && (ball.getY() == p1.getY() || ball.getY() >= p1.getY() && ball.getY() <= p1.getY() + p1.getHeight())) {
-            // System.out.println("coll with p1");    just for debugging if it collides
+        if (collidesWithPlayer(p1)) {
             movebacktoleft = false;
         }
-
 
         if (!movebacktoleft) {
             // moves ball to the right side
@@ -129,12 +139,25 @@ public class UI extends JPanel implements KeyListener {
             }
         }
 
-        // collision with player2
-        //                      player bar position          ball on same heigh                                                       entire player bar
-        if (ball.getX() == (p2.getX() - p2.getWidth()) && (ball.getY() == p2.getY() || ball.getY() >= p2.getY() && ball.getY() <= p2.getY() + p2.getHeight())) {
-            //System.out.println("coll with p2");    just for debugging if it collides
+        if (collidesWithPlayer(p2)) {
             movebacktoleft = true;
         }
+    }
+
+    private boolean collidesWithPlayer(Player player) {
+        int playerBarPosition = 0;
+
+        if (player.getName().equals("p1")) {
+            playerBarPosition = player.getX() + player.getWidth();
+        } else if (player.getName().equals("p2")) {
+            playerBarPosition = player.getX() - player.getWidth();
+        }
+
+        if (ball.getX() == playerBarPosition && ball.getY() >= player.getY() && ball.getY() <= player.getY() + player.getHeight()) {
+            System.out.println("collides with " + player.getName());
+            return true;
+        }
+        return false;
     }
 
     private void enableMoveable() {
