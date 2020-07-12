@@ -2,55 +2,46 @@ package com.pong;
 
 public class Ball {
 
-    private int x;
-    private int y;
-    private int width;
-    private int height;
-    private int velocity;
+    private double x;
+    private double y;
+    private double width;
+    private double height;
+    private Vector velocity;
 
-
-
-    public Ball(int x, int y, int width, int height,int velocity) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-        this.velocity = velocity;
-    }
-
-    public int getVelocity() {
+    public Vector getVelocity() {
         return velocity;
     }
 
-    public void setX(int x) {
+    public void setVelocity(Vector velocity) {
+        this.velocity = velocity;
+    }
+
+    public Ball(double x, double y, double width, double height, Vector velocity) {
         this.x = x;
-    }
-
-    public void setY(int y) {
         this.y = y;
-    }
-
-    public void setWidth(int width) {
         this.width = width;
-    }
-
-    public void setHeight(int height) {
         this.height = height;
+        this.velocity = velocity.normalize();
     }
 
-    public int getX() {
+    public void move() {
+        x += velocity.getX();
+        y += velocity.getY();
+    }
+
+    public double getX() {
         return x;
     }
 
-    public int getY() {
+    public double getY() {
         return y;
     }
 
-    public int getWidth() {
+    public double getWidth() {
         return width;
     }
 
-    public int getHeight() {
+    public double getHeight() {
         return height;
     }
 }

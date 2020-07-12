@@ -20,7 +20,8 @@ public class UI extends JPanel implements KeyListener {
     private boolean sisPressed;
     private boolean arrowUPisPressed;
     private boolean arrowDownisPressed;
-    private boolean movebacktoleft;
+    private boolean isP1Unhittable;
+    private boolean isP2Unhittable;
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -32,10 +33,9 @@ public class UI extends JPanel implements KeyListener {
         g2d.setColor(Color.WHITE);
         g2d.fillRect(p2.getX(), p2.getY(), p2.getWidth(), p2.getHeight());
         g2d.setColor(Color.WHITE);
-        g2d.fillOval(ball.getX(), ball.getY(), ball.getWidth(), ball.getHeight());
-        g2d.setStroke(new BasicStroke(5));
+        g2d.fillOval((int) ball.getX(), (int) ball.getY(), (int) ball.getWidth(), (int) ball.getHeight());
+        g2d.setStroke(new BasicStroke(2));
         g2d.drawLine(234, 0, 234, 500);
-        //System.out.println("x " + ball.getX() + " y " + ball.getY());
         repaint();
     }
 
@@ -62,8 +62,7 @@ public class UI extends JPanel implements KeyListener {
         frame.add(this);
         frame.setVisible(true);
         enableMoveable();
-        ball = new Ball(230, 200, 1, 1, 3);
-        movebacktoleft = true;
+        ball = new Ball(230, 200, 20, 20, new Vector(-1, 0.1));
 
         Runnable keyController = () -> {
             while (true) {
@@ -106,7 +105,7 @@ public class UI extends JPanel implements KeyListener {
             while (true) {
                 updateBall();
                 try {
-                    Thread.sleep(ball.getVelocity());
+                    Thread.sleep(5);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -117,48 +116,75 @@ public class UI extends JPanel implements KeyListener {
         collisionBallThread.start();
     }
 
-
     private synchronized void updateBall() {
-
-        // movebacktoleft  affects that the ball bounces back if he collides with one of the player bars
-        if (movebacktoleft) {
-            // moves ball to the left side
-            if (ball.getX() >= p1.getX()) {
-                ball.setX(ball.getX() - 1);
-            }
-        }
+        ball.move();
 
         if (collidesWithPlayer(p1)) {
-            movebacktoleft = false;
-        }
-
-        if (!movebacktoleft) {
-            // moves ball to the right side
-            if (ball.getX() <= p2.getX()) {
-                ball.setX(ball.getX() + 1);
-            }
+            System.out.println(collisionLocation(p1) + " coordinate of p1");
+            ball.getVelocity().setX(-ball.getVelocity().getX());
         }
 
         if (collidesWithPlayer(p2)) {
-            movebacktoleft = true;
+            System.out.println(collisionLocation(p2) + " coordinate of p2");
+            ball.getVelocity().setX(-ball.getVelocity().getX());
+        }
+
+        // collision with up and down
+        if ((ball.getY() + (ball.getHeight() / 2) >= 450) || ball.getY() - (ball.getHeight() / 2) <= 0) {
+            ball.getVelocity().setY(-ball.getVelocity().getY());
+        }
+
+        // collision with the left side
+        if (ball.getX() <= p1.getX()) {
+            System.out.println("hit left side");
+            // increase points
+        }
+
+        // collision with the right side
+        if (ball.getX() >= p2.getX()) {
+            System.out.println("hit right side");
+            // increase points
         }
     }
 
     private boolean collidesWithPlayer(Player player) {
-        int playerBarPosition = 0;
 
-        if (player.getName().equals("p1")) {
-            playerBarPosition = player.getX() + player.getWidth();
-        } else if (player.getName().equals("p2")) {
-            playerBarPosition = player.getX() - player.getWidth();
+        if (isP1Unhittable) {
+            return false;
         }
 
-        if (ball.getX() == playerBarPosition && ball.getY() >= player.getY() && ball.getY() <= player.getY() + player.getHeight()) {
-            System.out.println("collides with " + player.getName());
-            return true;
+        if (isP2Unhittable) {
+            return false;
+        }
+
+        if (player.isLeftPlayer()) {
+            if (ball.getX() <= player.getX() + player.getWidth()) {
+
+                if (ball.getY() + (ball.getHeight() / 2) >= player.getY() && ball.getY() - (ball.getHeight() / 2) <= player.getY() + player.getHeight()) {
+
+                    return true;
+                } else {
+                    isP1Unhittable = true;
+                }
+            }
+        } else {
+            if (ball.getX() >= player.getX() - player.getWidth()) {
+
+                if (ball.getY() + (ball.getHeight() / 2) >= player.getY() && ball.getY() - (ball.getHeight() / 2) <= player.getY() + player.getHeight()) {
+
+                    return true;
+                } else {
+                    isP2Unhittable = true;
+                }
+            }
         }
         return false;
     }
+
+    private double collisionLocation(Player player) {
+        return ball.getY() - (player.getY() + (player.getHeight() / 2.0));
+    }
+
 
     private void enableMoveable() {
         p1isMoveableUP = true;

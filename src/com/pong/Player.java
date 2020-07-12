@@ -7,22 +7,14 @@ public class Player {
     private int y;
     private int height;
     private int width;
-    private String name;
+    private boolean isLeftPlayer;
 
-    public Player(int x, int y, int height, int width,String name) {
+    public Player(int x, int y, int height, int width, boolean isLeftPlayer) {
         this.x = x;
         this.y = y;
         this.height = height;
         this.width = width;
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setY(int y) {
-        this.y = y;
+        this.isLeftPlayer = isLeftPlayer;
     }
 
     public int getX() {
@@ -33,11 +25,19 @@ public class Player {
         return y;
     }
 
+    public void setY(int y) {
+        this.y = y;
+    }
+
     public int getHeight() {
         return height;
     }
 
     public int getWidth() {
         return width;
+    }
+
+    public boolean isLeftPlayer() {
+        return isLeftPlayer;
     }
 }
