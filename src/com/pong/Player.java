@@ -5,16 +5,31 @@ public class Player {
 
     private int x;
     private int y;
-    private int height;
-    private int width;
-    private boolean isLeftPlayer;
+    private final int height;
+    private final int width;
+    private final boolean isLeftPlayer;
+    private final int playerNumber;
+    private int points;
 
-    public Player(int x, int y, int height, int width, boolean isLeftPlayer) {
+    public void setPoints(int points) {
+        this.points = points;
+    }
+
+    public int getPoints() {
+        return points;
+    }
+
+    public int getPlayerNumber() {
+        return playerNumber;
+    }
+
+    public Player(int x, int y, int height, int width, boolean isLeftPlayer, int playerNumber) {
         this.x = x;
         this.y = y;
         this.height = height;
         this.width = width;
         this.isLeftPlayer = isLeftPlayer;
+        this.playerNumber = playerNumber;
     }
 
     public int getX() {

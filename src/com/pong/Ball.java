@@ -4,12 +4,20 @@ public class Ball {
 
     private double x;
     private double y;
-    private double width;
-    private double height;
+    private final double width;
+    private final double height;
     private Vector velocity;
 
     public Vector getVelocity() {
         return velocity;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public void setY(double y) {
+        this.y = y;
     }
 
     public void setVelocity(Vector velocity) {
