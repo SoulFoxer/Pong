@@ -12,21 +12,23 @@ public class UI extends JPanel implements KeyListener {
     private Player p1;
     private Player p2;
     private Ball ball;
-    private boolean p1isMoveableUP;
-    private boolean p1isMoveableDown;
-    private boolean p2isMoveableUP;
-    private boolean p2isMoveableDown;
-    private boolean wisPressed;
-    private boolean sisPressed;
-    private boolean arrowUPisPressed;
-    private boolean arrowDownisPressed;
-    private boolean isP1Unhittable;
-    private boolean isP2Unhittable;
+    private volatile boolean p1isMoveableUP;
+    private volatile boolean p1isMoveableDown;
+    private volatile boolean p2isMoveableUP;
+    private volatile boolean p2isMoveableDown;
+    private volatile boolean wisPressed;
+    private volatile boolean sisPressed;
+    private volatile boolean arrowUPisPressed;
+    private volatile boolean arrowDownisPressed;
+    private volatile boolean isP1Unhittable;
+    private volatile boolean isP2Unhittable;
+    private volatile boolean running;
+    private volatile boolean isGameFinished;
+    private int bestOf;
     private String winMessage;
     private JFrame frame;
-    private boolean running;
-    private boolean isGameFinished;
-    private int bestOf;
+    private Thread keyControllerThread;                                     // having a refenrence to controll it from whereever in the code
+    private Thread collisionBallThread;                                     // having a refenrence to controll it from whereever in the code
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -46,10 +48,10 @@ public class UI extends JPanel implements KeyListener {
         } else {
             g2d.setFont(new Font("TimesRoman", Font.BOLD, 40));
             g2d.setColor(new Color(255, 120, 0));
-            g2d.drawString(winMessage, 60, 200);
-            resetGame();
+            int l = (int) g2d.getFontMetrics().getStringBounds(winMessage, g2d).getWidth(); // getting width of the winMessage
+            g2d.drawString(winMessage, (frame.getWidth() / 2 - l / 2) - 15, 200);
+            running = false;
         }
-
         repaint();
     }
 
@@ -61,11 +63,10 @@ public class UI extends JPanel implements KeyListener {
         this.p2 = p2;
     }
 
-    public void init() {
+    public void init() throws InterruptedException {
         final int width = 500;
         final int height = 500;
         frame = new JFrame();
-        frame.setTitle("Pong" + "P1: " + p1.getPoints() + " P2: " + p2.getPoints());
         frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(width, height);
@@ -75,12 +76,27 @@ public class UI extends JPanel implements KeyListener {
         setSize(new Dimension(width, height));
         frame.add(this);
         frame.setVisible(true);
-        enablePlayerMovement();
-        ball = new Ball(230, 200, 20, 20, new Vector(-1, 0.1));
-        winMessage = "";
-        running = true;
-        bestOf = 5;
+        bestOf = 4;
+        reinit();
+    }
 
+    public void reinit() throws InterruptedException {
+        ball = new Ball(230, 200, 20, 20, new Vector(-1.0, 0.1));
+        winMessage = "";
+        frame.setTitle("Pong" + "P1: " + p1.getPoints() + " P2: " + p2.getPoints());
+        p1isMoveableUP = false;
+        p1isMoveableDown = false;
+        p2isMoveableUP = false;
+        p2isMoveableDown = false;
+        wisPressed = false;
+        sisPressed = false;
+        arrowUPisPressed = false;
+        arrowDownisPressed = false;
+        isP1Unhittable = false;
+        isP2Unhittable = false;
+        isGameFinished = false;
+        running = true;
+        enablePlayerMovement();
 
         Runnable keyController = () -> {
             while (running) {
@@ -115,10 +131,6 @@ public class UI extends JPanel implements KeyListener {
                 }
             }
         };
-        Thread keyControllerThread = new Thread(keyController);
-        keyControllerThread.start();
-
-
         Runnable collisionBall = () -> {
             while (running) {
                 update();
@@ -130,26 +142,49 @@ public class UI extends JPanel implements KeyListener {
             }
         };
 
-        Thread collisionBallThread = new Thread(collisionBall);
+        collisionBallThread = new Thread(collisionBall);
+        keyControllerThread = new Thread(keyController);
+        keyControllerThread.start();
         collisionBallThread.start();
+        collisionBallThread.join();                             // main process is waiting for the thread ( collisionBallThread ) to end  main thread will go on ...
+        keyControllerThread.join();
+        Thread.sleep(2000);
+    }
+
+    private double power(double base, int exp) {
+        if (exp < 0) {
+            throw new IllegalArgumentException("Exponent can´t be negative");
+        }
+        double res = 1.0;
+
+        for (int i = 1; i <= exp; i++) {
+            res = (res * base);
+        }
+        return res;
     }
 
     private synchronized void update() {
-
         checkWin();
-
         ball.move();
         isP1Unhittable = false;
         isP2Unhittable = false;
 
         if (collidesWithPlayer(p1)) {
-            System.out.println(collisionLocation(p1) + " coordinate of p1");
-            ball.getVelocity().setX(-ball.getVelocity().getX());
+            double maxDist = p1.getHeight() / 2 + ball.getWidth() / 2;
+            double relativeDis = collisionLocation(p1) / maxDist;            // output will be something between 1 and -1
+            relativeDis = power(relativeDis, 3);
+            ball.getVelocity().setX(-ball.getVelocity().getX() + 0.2 * Math.abs(relativeDis));      // reverse direction and vector addition
+            ball.getVelocity().setY(ball.getVelocity().getY() + relativeDis);
+            ball.getVelocity().normalize();
         }
 
         if (collidesWithPlayer(p2)) {
-            System.out.println(collisionLocation(p2) + " coordinate of p2");
-            ball.getVelocity().setX(-ball.getVelocity().getX());
+            double maxDist = p2.getHeight() / 2 + ball.getWidth() / 2;
+            double relativeDis = collisionLocation(p2) / maxDist;            // output will be something between 1 and -1
+            relativeDis = power(relativeDis, 3);
+            ball.getVelocity().setX(-ball.getVelocity().getX() - 0.2 * Math.abs(relativeDis));    // reverse direction and vector addition
+            ball.getVelocity().setY(ball.getVelocity().getY() + relativeDis);
+            ball.getVelocity().normalize();
         }
 
         // collision with up and down
@@ -172,25 +207,21 @@ public class UI extends JPanel implements KeyListener {
         }
     }
 
+
     private void checkWin() {
-        if (p1.getPoints() == bestOf && p2.getPoints() < bestOf) {
+        int pointLimit = (bestOf) / 2;
+        if (p1.getPoints() == pointLimit + 1) {
             winMessage = "Spieler " + p1.getPlayerNumber() + " gewinnt !";
             frame.setTitle("Pong" + "P1: " + p1.getPoints() + " P2: " + p2.getPoints());
             isGameFinished = true;
-
-        }
-        if (p2.getPoints() == bestOf && p1.getPoints() < bestOf) {
+        } else if (p2.getPoints() == pointLimit + 1) {
             winMessage = "Spieler " + p2.getPlayerNumber() + " gewinnt !";
             frame.setTitle("Pong" + "P1: " + p1.getPoints() + " P2: " + p2.getPoints());
             isGameFinished = true;
-        }
-
-        if (p1.getPoints() == bestOf && p2.getPoints() == bestOf) {
+        } else if (p1.getPoints() + p2.getPoints() == bestOf) {
             winMessage = "Unentschieden";
-            resetGame();
             isGameFinished = true;
         }
-
     }
 
     private boolean collidesWithPlayer(Player player) {
@@ -199,22 +230,19 @@ public class UI extends JPanel implements KeyListener {
         }
 
         if (player.isLeftPlayer()) {
-            if (ball.getX() <= player.getX() + player.getWidth()) {
+            if (ball.getX() <= player.getX() + player.getWidth() && ball.getVelocity().getX() <= 0) {
 
                 if (ball.getY() + (ball.getHeight() / 2) >= player.getY() && ball.getY() - (ball.getHeight() / 2) <= player.getY() + player.getHeight()) {
-
                     return true;
                 } else {
                     isP1Unhittable = true;
-
                 }
             }
             // is right player
         } else {
-            if (ball.getX() >= player.getX() - player.getWidth()) {
+            if (ball.getX() >= player.getX() - player.getWidth() && ball.getVelocity().getX() >= 0) {
 
                 if (ball.getY() + (ball.getHeight() / 2) >= player.getY() && ball.getY() - (ball.getHeight() / 2) <= player.getY() + player.getHeight()) {
-
                     return true;
                 } else {
                     isP2Unhittable = true;
@@ -234,14 +262,6 @@ public class UI extends JPanel implements KeyListener {
         isP1Unhittable = false;
         isP2Unhittable = false;
     }
-
-    private void resetGame() {
-        p1.setPoints(0);
-        p2.setPoints(0);
-        frame.setTitle("Pong" + "P1: " + p1.getPoints() + " P2: " + p2.getPoints());
-        resetBall();
-    }
-
 
     private void enablePlayerMovement() {
         p1isMoveableUP = true;

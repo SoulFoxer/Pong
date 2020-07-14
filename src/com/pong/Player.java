@@ -9,7 +9,7 @@ public class Player {
     private final int width;
     private final boolean isLeftPlayer;
     private final int playerNumber;
-    private int points;
+    private volatile int points;
 
     public void setPoints(int points) {
         this.points = points;

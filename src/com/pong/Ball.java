@@ -20,10 +20,6 @@ public class Ball {
         this.y = y;
     }
 
-    public void setVelocity(Vector velocity) {
-        this.velocity = velocity;
-    }
-
     public Ball(double x, double y, double width, double height, Vector velocity) {
         this.x = x;
         this.y = y;
