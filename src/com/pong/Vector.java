@@ -26,18 +26,29 @@ public class Vector {
         this.y = y;
     }
 
-    public Vector normalize() {
+    public Vector normalize(double speed) {
         if (x == 0 && y == 0) {
             throw new ArithmeticException("can´t normalize 0 zero vector");
-        }else{
+        } else {
             double n = getNorm();
-            x = x/n;
-            y = y/n;
+            x = speed * x / n;
+            y = speed * y / n;
         }
         return this;
     }
 
-    private double getNorm(){
-        return Math.sqrt(x*x+y*y);
+    public Vector normalize() {
+        if (x == 0 && y == 0) {
+            throw new ArithmeticException("can´t normalize 0 zero vector");
+        } else {
+            double n = getNorm();
+            x = x / n;
+            y = y / n;
+        }
+        return this;
+    }
+
+    private double getNorm() {
+        return Math.sqrt(x * x + y * y);
     }
 }

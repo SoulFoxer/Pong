@@ -11,6 +11,15 @@ public class Player {
     private final int playerNumber;
     private volatile int points;
 
+    public Player(int x, int y, int height, int width, boolean isLeftPlayer, int playerNumber) {
+        this.x = x;
+        this.y = y;
+        this.height = height;
+        this.width = width;
+        this.isLeftPlayer = isLeftPlayer;
+        this.playerNumber = playerNumber;
+    }
+
     public void setPoints(int points) {
         this.points = points;
     }
@@ -21,15 +30,6 @@ public class Player {
 
     public int getPlayerNumber() {
         return playerNumber;
-    }
-
-    public Player(int x, int y, int height, int width, boolean isLeftPlayer, int playerNumber) {
-        this.x = x;
-        this.y = y;
-        this.height = height;
-        this.width = width;
-        this.isLeftPlayer = isLeftPlayer;
-        this.playerNumber = playerNumber;
     }
 
     public int getX() {

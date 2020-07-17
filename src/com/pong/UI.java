@@ -4,7 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-
 import static java.awt.event.KeyEvent.*;
 
 public class UI extends JPanel implements KeyListener {
@@ -25,6 +24,7 @@ public class UI extends JPanel implements KeyListener {
     private volatile boolean running;
     private volatile boolean isGameFinished;
     private int bestOf;
+    private double maxSpeed;
     private String winMessage;
     private JFrame frame;
     private Thread keyControllerThread;                                     // having a refenrence to controll it from whereever in the code
@@ -77,6 +77,7 @@ public class UI extends JPanel implements KeyListener {
         frame.add(this);
         frame.setVisible(true);
         bestOf = 4;
+        maxSpeed = 2.74f;
         reinit();
     }
 
@@ -96,6 +97,7 @@ public class UI extends JPanel implements KeyListener {
         isP2Unhittable = false;
         isGameFinished = false;
         running = true;
+
         enablePlayerMovement();
 
         Runnable keyController = () -> {
@@ -175,7 +177,11 @@ public class UI extends JPanel implements KeyListener {
             relativeDis = power(relativeDis, 3);
             ball.getVelocity().setX(-ball.getVelocity().getX() + 0.2 * Math.abs(relativeDis));      // reverse direction and vector addition
             ball.getVelocity().setY(ball.getVelocity().getY() + relativeDis);
-            ball.getVelocity().normalize();
+            ball.getVelocity().normalize(ball.getSpeed());
+            if(ball.getSpeed() <maxSpeed){
+                ball.setSpeed(ball.getSpeed() * 1.15555f);
+                ball.getVelocity().normalize(ball.getSpeed());
+            }
         }
 
         if (collidesWithPlayer(p2)) {
@@ -184,7 +190,11 @@ public class UI extends JPanel implements KeyListener {
             relativeDis = power(relativeDis, 3);
             ball.getVelocity().setX(-ball.getVelocity().getX() - 0.2 * Math.abs(relativeDis));    // reverse direction and vector addition
             ball.getVelocity().setY(ball.getVelocity().getY() + relativeDis);
-            ball.getVelocity().normalize();
+            ball.getVelocity().normalize(ball.getSpeed());
+            if(ball.getSpeed() <maxSpeed){
+                ball.setSpeed(ball.getSpeed() * 1.15555f);
+                ball.getVelocity().normalize(ball.getSpeed());
+            }
         }
 
         // collision with up and down
@@ -257,6 +267,8 @@ public class UI extends JPanel implements KeyListener {
     }
 
     private void resetBall() {
+        ball.setSpeed(1.0f);
+        ball.getVelocity().normalize();
         ball.setX(230);
         ball.setY(200);
         isP1Unhittable = false;

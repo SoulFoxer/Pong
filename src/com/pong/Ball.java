@@ -7,6 +7,7 @@ public class Ball {
     private final double width;
     private final double height;
     private Vector velocity;
+    private double speed;
 
     public Vector getVelocity() {
         return velocity;
@@ -25,7 +26,16 @@ public class Ball {
         this.y = y;
         this.width = width;
         this.height = height;
+        this.speed = 1.0f;
         this.velocity = velocity.normalize();
+    }
+
+    public void setSpeed(double speed) {
+        this.speed = speed;
+    }
+
+    public double getSpeed() {
+        return speed;
     }
 
     public void move() {
